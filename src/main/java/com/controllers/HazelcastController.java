@@ -1,18 +1,21 @@
 package com.controllers;
 
-import com.hazelcast.core.HazelcastInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 
 @RestController
 @RequestMapping("/hazelcast")
 public class HazelcastController {
 
-    private final Logger logger = LoggerFactory.getLogger(HazelcastController.class);
     private final HazelcastInstance hazelcastInstance;
 
     @Autowired
@@ -22,8 +25,10 @@ public class HazelcastController {
 
     @PostMapping(value = "/write-data")
     public String writeDataToHazelcast(@RequestParam String key, @RequestParam String value) {
-        Map<String, String> hazelcastMap = hazelcastInstance.getMap("my-map");
+        IMap<String, String> hazelcastMap = hazelcastInstance.getMap("my-map");
+        hazelcastMap.lock(key);
         hazelcastMap.put(key, value);
+        hazelcastMap.unlock(key);
         return "Data is stored.";
     }
 
@@ -36,7 +41,7 @@ public class HazelcastController {
     @GetMapping(value = "/read-all-data")
     public Map<String, String> readAllDataFromHazelcast() {
         Map<String, String> hazelcastMap = hazelcastInstance.getMap("my-map");
-        return hazelcastInstance.getMap("my-map");
+        return hazelcastMap;
     }
 
 }
